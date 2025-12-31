@@ -13,7 +13,6 @@
 --gray:#6c757d;
 --light:#f8f9fa;
 --border:#ced4da;
---shadow:rgba(0,0,0,.15);
 }
 body{
 margin:0;
@@ -29,86 +28,25 @@ background:#fff;
 margin:30px 0;
 padding:30px;
 border-radius:12px;
-box-shadow:0 8px 25px var(--shadow);
+box-shadow:0 8px 25px rgba(0,0,0,.15);
 }
 h1{text-align:center;color:var(--blue);}
-
-.tabs{
-display:flex;
-gap:10px;
-border-bottom:2px solid var(--border);
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-.tab{
-padding:10px 18px;
-cursor:pointer;
-font-weight:600;
-color:var(--gray);
-border-radius:8px 8px 0 0;
-}
-.tab.active{
-background:#fff;
-color:var(--blue);
-border:1px solid var(--border);
-border-bottom:none;
-}
-
-.actions{
-margin:15px 0;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-}
-button{
-border:none;
-padding:12px 22px;
-border-radius:8px;
-font-weight:700;
-cursor:pointer;
-color:#fff;
-}
+.tabs{display:flex;gap:10px;border-bottom:2px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:10px 18px;cursor:pointer;font-weight:600;color:var(--gray);}
+.tab.active{color:var(--blue);border-bottom:3px solid var(--blue);}
+.actions{margin:15px 0;display:flex;gap:15px;flex-wrap:wrap;}
+button{border:none;padding:12px 22px;border-radius:8px;font-weight:700;color:#fff;cursor:pointer;}
 .btn-green{background:var(--green)}
 .btn-blue{background:var(--blue)}
 .btn-red{background:var(--red)}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-th,td{
-border:1px solid var(--border);
-padding:9px;
-font-size:.9rem;
-transition: background 1s;
-}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid var(--border);padding:9px;font-size:.9rem}
 th{background:#f1f3f5}
-.badge{
-padding:3px 8px;
-border-radius:10px;
-font-size:.75rem;
-color:#fff;
-font-weight:bold;
-}
-.badge-new{background:var(--green);}
-.badge-old{background:var(--red);}
-
+.badge{padding:3px 8px;border-radius:10px;font-size:.75rem;color:#fff;font-weight:bold}
+.badge-new{background:var(--green)}
+.badge-old{background:var(--red)}
 .hidden{display:none}
-
-.batch-box{
-border:1px solid var(--border);
-padding:15px;
-border-radius:10px;
-margin-bottom:15px;
-background:#f8f9fa;
-}
-
-.footer{
-text-align:center;
-margin-top:20px;
-font-size:.85rem;
-color:#666;
-}
+.footer{text-align:center;margin-top:20px;font-size:.85rem;color:#666}
 </style>
 </head>
 
@@ -118,44 +56,31 @@ color:#666;
 <h1>Admin VCF Download Panel</h1>
 
 <div class="tabs">
-<div class="tab active" id="tab-main" onclick="openTab('main')">Members</div>
-<div class="tab" id="tab-batches" onclick="openTab('batches')">VCF Batches</div>
-<div class="tab" id="tab-mark" onclick="openTab('mark')">Mark as Downloaded</div>
-<div class="tab" id="tab-institution" onclick="openTab('institution')">Institutions</div>
+<div class="tab active" onclick="openTab('main')">Members</div>
+<div class="tab" onclick="openTab('mark')">Mark as Downloaded</div>
+<div class="tab" onclick="openTab('institution')">Institutions</div>
 </div>
 
-<!-- MAIN VIEW -->
-<div id="main" class="tab-content">
+<!-- MEMBERS -->
+<div id="main">
 <div class="actions">
-<button class="btn-green" onclick="downloadAndMarkNew()">⬇ Download NEW Members</button>
-<button class="btn-blue" onclick="prepareBatches('old')">⬇ Download OLD Members</button>
-<button class="btn-blue" onclick="downloadAll()">⬇ Download ALL Members</button>
+<button class="btn-green" onclick="downloadNew()">⬇ Download NEW</button>
+<button class="btn-blue" onclick="downloadAll()">⬇ Download ALL</button>
 </div>
 <div id="members-table">Loading…</div>
 </div>
 
-<!-- BATCH VIEW -->
-<div id="batches" class="tab-content hidden">
+<!-- MARK -->
+<div id="mark" class="hidden">
 <div class="actions">
-<button class="btn-blue" onclick="openTab('main')">⬅ Back to Members</button>
+<button class="btn-red" onclick="markAllOld()">✅ Mark ALL NEW as OLD</button>
 </div>
-<div id="batch-area"></div>
+<div id="mark-table"></div>
 </div>
 
-<!-- MARK AS DOWNLOADED VIEW -->
-<div id="mark" class="tab-content hidden">
-<div class="actions">
-<button class="btn-red" onclick="markNewAsOld()">✅ Mark All NEW as OLD</button>
-</div>
-<div id="mark-table">Loading…</div>
-</div>
-
-<!-- INSTITUTIONS VIEW -->
-<div id="institution" class="tab-content hidden">
-<div class="actions">
-<button class="btn-blue" onclick="openTab('main')">⬅ Back to Members</button>
-</div>
-<div id="institution-table">Loading…</div>
+<!-- INSTITUTION -->
+<div id="institution" class="hidden">
+<div id="institution-table"></div>
 </div>
 
 <div class="footer">CampusConnect NG • Admin Only</div>
@@ -163,203 +88,98 @@ color:#666;
 
 <script>
 const API="https://sheetdb.io/api/v1/lcqbyo961rmzf";
-const BATCH_SIZE=100;
 let contacts=[];
 
-/* ---------- TAB HANDLER ---------- */
-function openTab(tab){
-document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(c=>c.classList.add('hidden'));
-document.getElementById(tab).classList.remove('hidden');
-document.getElementById(`tab-${tab}`).classList.add('active');
-if(tab==='mark') renderMarkTable();
-if(tab==='institution') renderInstitutionTable();
+/* TABS */
+function openTab(id){
+document.querySelectorAll('#main,#mark,#institution').forEach(d=>d.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
 }
 
-/* ---------- HELPERS ---------- */
-function normalize(p){
-let n=p.replace(/\D/g,"");
-if(n.startsWith("0")) n=n.slice(1);
-if(!n.startsWith("234")) n="234"+n;
-return "+"+n;
-}
-
-function vcf(c){
-return `BEGIN:VCARD
-VERSION:3.0
-FN:${c.name}
-TEL:${normalize(c.phone)}
-NOTE:${c.state||""}
-END:VCARD
-`;
-}
-
-/* ---------- LOAD DATA ---------- */
+/* LOAD DATA */
 async function load(){
 try{
-  const res=await fetch(API);
-  const data=await res.json();
-  contacts = data;
-  renderMain();
+const res=await fetch(API);
+contacts=await res.json();
+contacts.sort((a,b)=>new Date(b.joindate)-new Date(a.joindate));
+renderMain();
 }catch(e){
-  console.error(e);
+document.getElementById("members-table").innerHTML="Failed to load data.";
 }
 }
-// Auto-refresh every 2 seconds
-setInterval(load,2000);
 load();
+setInterval(load,10000);
 
-/* ---------- RENDER MAIN TABLE ---------- */
+/* MAIN TABLE */
 function renderMain(){
 document.getElementById("members-table").innerHTML=`
 <table>
-<tr>
-<th>Status</th><th>Name</th><th>State</th><th>Phone</th><th>Joined</th>
-</tr>
+<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th></tr>
 ${contacts.map(c=>{
-const isNew = !c.status || c.status==='new';
-const badgeClass = isNew ? 'badge-new' : 'badge-old';
-return `<tr>
-<td><span class="badge ${badgeClass}">${isNew?'NEW':'OLD'}</span></td>
+const isNew=c.status!=='old';
+return `
+<tr>
+<td><span class="badge ${isNew?'badge-new':'badge-old'}">${isNew?'NEW':'OLD'}</span></td>
 <td>${c.name}</td>
 <td>${c.state||''}</td>
 <td>${c.phone}</td>
-<td>${new Date(c.joindate).toLocaleString()}</td>
 </tr>`;
 }).join('')}
 </table>`;
 }
 
-/* ---------- DOWNLOAD & MARK NEW MEMBERS ---------- */
-async function downloadAndMarkNew(){
-const newMembers = contacts.filter(c=>!c.status || c.status==='new');
-if(newMembers.length===0){alert("No NEW members."); return;}
-openTab('batches');
-renderBatches(newMembers,'new');
-newMembers.forEach(c=>c.status='old');
-renderMain();
-for(const c of newMembers){
-  try{
-    let res = await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`);
-    let exist = await res.json();
-    if(exist.length>0){
-      await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data:[{status:'old'}] })
-      });
-    } else {
-      await fetch(API,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data:[{name:c.name,phone:c.phone,status:'old',state:c.state||'',institution:c.institution||''}] })
-      });
-    }
-  }catch(e){ console.error(e); }
-}
-alert("NEW members downloaded and marked as OLD!");
+/* DOWNLOAD NEW */
+function downloadNew(){
+const list=contacts.filter(c=>c.status!=='old');
+if(!list.length) return alert("No NEW members.");
+downloadVCF(list,"CampusConnect_NEW.vcf");
 }
 
-/* ---------- BATCH RENDER ---------- */
-function renderBatches(list,type){
-let html="";
-for(let i=0;i<list.length;i+=BATCH_SIZE){
-const batch=list.slice(i,i+BATCH_SIZE);
-const content=batch.map(vcf).join("");
-const blob=new Blob([content],{type:"text/vcard"});
-const url=URL.createObjectURL(blob);
-
-html+=`
-<div class="batch-box">
-<b>${type.toUpperCase()} Batch ${i/BATCH_SIZE+1}</b><br>
-${batch.length} contacts<br><br>
-<a href="${url}" download="CampusConnect_${type}_Batch_${i/BATCH_SIZE+1}.vcf">
-<button class="btn-green">⬇ Download</button>
-</a>
-</div>`;
-}
-document.getElementById("batch-area").innerHTML=html;
-}
-
-/* ---------- DOWNLOAD ALL ---------- */
+/* DOWNLOAD ALL */
 function downloadAll(){
-const blob=new Blob([contacts.map(vcf).join("")],{type:"text/vcard"});
+downloadVCF(contacts,"CampusConnect_ALL.vcf");
+}
+
+/* VCF */
+function downloadVCF(list,name){
+const content=list.map(c=>`BEGIN:VCARD
+VERSION:3.0
+FN:${c.name}
+TEL:${c.phone}
+END:VCARD`).join("\n");
+const blob=new Blob([content],{type:"text/vcard"});
 const a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download="CampusConnect_ALL.vcf";
+a.download=name;
 a.click();
-URL.revokeObjectURL(a.href);
 }
 
-/* ---------- OLD MEMBERS ---------- */
-function prepareBatches(type){
-const list = type==='old'
-? contacts.filter(c=>c.status==='old')
-: contacts.filter(c=>!c.status || c.status==='new');
-if(!list.length){alert(`No ${type.toUpperCase()} members.`); return;}
-openTab('batches');
-renderBatches(list,type);
+/* MARK OLD */
+async function markAllOld(){
+if(!confirm("Mark all NEW as OLD?")) return;
+const list=contacts.filter(c=>c.status!=='old');
+for(const c of list){
+await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
+method:"PATCH",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({data:[{status:"old"}]})
+});
+}
+alert("All NEW marked as OLD");
+load();
 }
 
-/* ---------- MARK AS DOWNLOADED TAB ---------- */
-async function markNewAsOld(){
-const newContacts = contacts.filter(c=>!c.status || c.status==='new');
-if(newContacts.length===0){alert("No NEW members."); return;}
-newContacts.forEach(c=>c.status='old');
-renderMain();
-renderMarkTable();
-for(const c of newContacts){
-  try{
-    let res = await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`);
-    let exist = await res.json();
-    if(exist.length>0){
-      await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data:[{status:'old'}] })
-      });
-    } else {
-      await fetch(API,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data:[{name:c.name,phone:c.phone,status:'old',state:c.state||'',institution:c.institution||''}] })
-      });
-    }
-  }catch(e){ console.error(e); }
-}
-alert("All NEW members marked as OLD!");
-}
-
-function renderMarkTable(){
-const newContacts = contacts.filter(c=>!c.status || c.status==='new');
-document.getElementById("mark-table").innerHTML=`
-<table>
-<tr><th>Name</th><th>Phone</th><th>State</th><th>Joined</th></tr>
-${newContacts.map(c=>`<tr>
-<td>${c.name}</td>
-<td>${c.phone}</td>
-<td>${c.state||''}</td>
-<td>${new Date(c.joindate).toLocaleString()}</td>
-</tr>`).join('')}
-</table>`;
-}
-
-/* ---------- INSTITUTIONS TAB ---------- */
+/* INSTITUTIONS */
 function renderInstitutionTable(){
-const tableDiv = document.getElementById("institution-table");
-if(contacts.length===0){ tableDiv.innerHTML="No data"; return; }
-tableDiv.innerHTML=`
+const map={};
+contacts.forEach(c=>{
+const k=c.institution||"Unknown";
+map[k]=(map[k]||0)+1;
+});
+document.getElementById("institution-table").innerHTML=`
 <table>
-<tr><th>Name</th><th>Phone</th><th>Institution</th><th>Status</th></tr>
-${contacts.map(c=>{
-const badgeClass = (!c.status || c.status==='new') ? 'badge-new' : 'badge-old';
-return `<tr>
-<td>${c.name}</td>
-<td>${c.phone}</td>
-<td>${c.institution||''}</td>
-<td><span class="badge ${badgeClass}">${(!c.status || c.status==='new') ? 'NEW' : 'OLD'}</span></td>
-</tr>`;
-}).join('')}
+<tr><th>Institution</th><th>Total</th></tr>
+${Object.entries(map).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
 </table>`;
 }
 </script>
