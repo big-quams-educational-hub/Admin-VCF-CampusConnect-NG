@@ -6,67 +6,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
+:root {
+    --primary-blue: #007BFF;
+    --green-new: #28A745;
+    --red-old: #DC3545;
+    --white-bg: #FFFFFF;
+    --light-gray-bg: #F8F9FA;
+    --text-color-dark: #212529;
+    --text-color-light: #6C757D;
+    --border-color: #CED4DA;
+    --shadow-medium: rgba(0,0,0,0.12);
+}
 body{
-  font-family:'Segoe UI','Roboto',sans-serif;
-  background:#f8f9fa;
-  margin:0;
-  padding:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+    font-family:'Segoe UI','Roboto',sans-serif;
+    background:var(--light-gray-bg);
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 .header{
-  width:100%;
-  background:#007BFF;
-  color:#fff;
-  padding:20px 0;
-  text-align:center;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    width:100%;
+    background:var(--primary-blue);
+    color:var(--white-bg);
+    padding:20px 0;
+    text-align:center;
 }
 .header h1{margin:0;font-size:1.8rem;font-weight:700;}
 .panel{
-  width:90%; max-width:1000px;
-  background:#fff;
-  padding:30px;
-  margin:30px auto;
-  border-radius:12px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.12);
+    width:90%; max-width:1000px;
+    background:var(--white-bg);
+    padding:30px;
+    margin:30px auto;
+    border-radius:12px;
+    box-shadow:0 8px 25px var(--shadow-medium);
 }
-.tabs{display:flex;margin-bottom:20px;border-bottom:2px solid #ced4da;}
+h2{text-align:center;color:var(--primary-blue);margin-bottom:25px;}
+.tabs{display:flex;margin-bottom:20px;border-bottom:2px solid var(--border-color);}
 .tab-button{
-  background:#f8f9fa;
-  border:none;
-  padding:10px 20px;
-  cursor:pointer;
-  font-weight:600;
-  color:#6c757d;
-  border-top-left-radius:8px;
-  border-top-right-radius:8px;
-  margin-right:5px;
-  border:1px solid transparent;
-  border-bottom:none;
+    background:var(--light-gray-bg);
+    border:none;
+    padding:10px 20px;
+    cursor:pointer;
+    font-size:1rem;
+    font-weight:600;
+    color:var(--text-color-light);
+    border-top-left-radius:8px;
+    border-top-right-radius:8px;
+    margin-right:5px;
+    border:1px solid transparent;
+    border-bottom:none;
+    transition:0.3s;
 }
-.tab-button.active{
-  background:#fff;
-  color:#007BFF;
-  border:1px solid #ced4da;
-  margin-bottom:-2px;
-}
-.tab-content{display:none;}
+.tab-button.active{background:var(--white-bg);color:var(--primary-blue);border:1px solid var(--border-color);margin-bottom:-2px;}
+.tab-content{display:none;padding-top:20px;}
 .tab-content.active{display:block;}
-table{width:100%;border-collapse:collapse;margin-top:15px;}
-table th,table td{border:1px solid #ced4da;padding:10px;text-align:left;}
-table th{background:#f8f9fa;color:#007BFF;}
-tr:nth-child(even){background:#fcfdfe;}
-.button-group{display:flex;flex-wrap:wrap;gap:15px;margin-top:20px;}
-.action-button{padding:12px 20px;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;display:flex;align-items:center;}
-.action-button i{margin-right:8px;}
-.green{background:#28a745;}
-.green:hover{background:#218838;}
-.blue{background:#007BFF;}
-.blue:hover{background:#0056b3;}
-.orange{background:#ff8c00;}
-.orange:hover{background:#e07b00;}
+table{width:100%;border-collapse:collapse;background:var(--white-bg);}
+table th,table td{border:1px solid var(--border-color);padding:12px;text-align:left;color:var(--text-color-dark);}
+table th{background:var(--light-gray-bg);color:var(--primary-blue);}
+table tr:nth-child(even){background:#fcfdfe;}
+.action-button{padding:10px 18px;color:#fff;border:none;border-radius:8px;font-weight:bold;font-size:1rem;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;margin:5px 0;}
+.action-button.green{background:var(--green-new);}
+.action-button.green:hover{background:#218838;}
+.action-button.blue{background:var(--primary-blue);}
+.action-button.blue:hover{background:#0056b3;}
+.action-button.red{background:var(--red-old);}
+.badge{padding:3px 8px;border-radius:12px;color:#fff;font-weight:bold;font-size:0.85rem;}
+.badge-new{background:var(--green-new);}
+.badge-old{background:var(--red-old);}
+.footer-love{text-align:center;font-size:0.85rem;color:var(--text-color-light);margin-top:30px;padding-bottom:15px;width:100%;}
+.footer-love a{color:var(--primary-blue);text-decoration:none;font-weight:500;}
+@media (max-width:768px){.panel{padding:20px;}h2{font-size:1.5rem;}table th,table td{padding:8px;font-size:0.85rem;}.action-button{width:100%;padding:12px 20px;font-size:1rem;}}
 </style>
 </head>
 <body>
@@ -77,126 +87,173 @@ tr:nth-child(even){background:#fcfdfe;}
 
 <div class="panel">
   <div class="tabs">
-    <button class="tab-button active" onclick="openTab(event,'vcf-list')">VCF Contacts</button>
-    <button class="tab-button" onclick="openTab(event,'mark-download')">Mark New as Downloaded</button>
+    <button class="tab-button active" onclick="openTab(event,'vcf-downloads')">VCF Downloads</button>
+    <button class="tab-button" onclick="openTab(event,'whatsapp-contacts')">WhatsApp Contacts</button>
   </div>
 
-  <!-- VCF List Tab -->
-  <div id="vcf-list" class="tab-content active">
-    <h2>All Contacts</h2>
-    <div id="contacts-table">Loading contacts...</div>
-    <div class="button-group">
-      <button class="action-button green" onclick="downloadVCF('New')"><i class="fas fa-download"></i> Download New Contacts</button>
-      <button class="action-button blue" onclick="downloadVCF('Old')"><i class="fas fa-download"></i> Download Old Contacts</button>
-    </div>
-    <div id="vcf-batches"></div>
+  <!-- VCF Downloads -->
+  <div id="vcf-downloads" class="tab-content active">
+    <h2>VCF Contact List</h2>
+    <div id="vcf-message">Loading contacts...</div>
+    <div class="action-button green" onclick="downloadNewMembersVCF()">Download New Members</div>
+    <div class="action-button blue" onclick="downloadAllMembersVCF()">Download All Members</div>
+    <div class="action-button red" onclick="markNewAsDownloaded()">Mark as Download</div>
+    <div id="vcf-table-container" style="margin-top:20px;"></div>
   </div>
 
-  <!-- Mark as Download Tab -->
-  <div id="mark-download" class="tab-content">
-    <h2>Mark New Contacts as Downloaded</h2>
-    <p>Click the button below to mark all contacts with <strong>status = New</strong> as downloaded. They will automatically be tagged as Old.</p>
-    <div class="button-group">
-      <button class="action-button orange" onclick="markAsDownloaded()"><i class="fas fa-check"></i> Mark All New as Downloaded</button>
-    </div>
+  <!-- WhatsApp Contacts -->
+  <div id="whatsapp-contacts" class="tab-content">
+    <h2>WhatsApp Contact List</h2>
+    <div id="whatsapp-contacts-table">Loading WhatsApp contacts...</div>
   </div>
 
+</div>
+
+<div class="footer-love">
+  Created with ❤️ by <a href="#" target="_blank">CampusConnect NG</a>
 </div>
 
 <script>
 const API_URL="https://sheetdb.io/api/v1/lcqbyo961rmzf";
 const CONTACTS_PER_BATCH=100;
-let contacts=[];
-
-document.addEventListener('DOMContentLoaded',fetchContacts);
+let allContactsData=[];
 
 function openTab(evt,tabName){
-  document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active'));
-  document.querySelectorAll('.tab-button').forEach(tb=>tb.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  evt.currentTarget.classList.add('active');
+  document.querySelectorAll(".tab-content").forEach(tc=>tc.style.display="none");
+  document.querySelectorAll(".tab-button").forEach(tb=>tb.classList.remove("active"));
+  document.getElementById(tabName).style.display="block";
+  evt.currentTarget.classList.add("active");
+  if(tabName==="whatsapp-contacts") displayWhatsAppContacts(allContactsData);
 }
 
-async function fetchContacts(){
+async function fetchAllContacts(){
   try{
     const res=await fetch(API_URL);
     const data=await res.json();
-    contacts=data.filter(c=>c.name && c.phone);
-    renderContactsTable();
+    allContactsData=data.filter(entry=>entry.name && entry.phone && entry.status);
+    displayVCFTable();
+    document.getElementById("vcf-message").innerText=`Total contacts: ${allContactsData.length}`;
   }catch(e){
     console.error(e);
-    document.getElementById('contacts-table').innerHTML='Failed to load contacts.';
+    document.getElementById("vcf-message").innerText="Failed to load contacts.";
   }
 }
 
-function renderContactsTable(){
-  if(!contacts.length){
-    document.getElementById('contacts-table').innerHTML='No contacts found.';
-    return;
-  }
-  let html=`<table>
-    <thead>
-      <tr><th>#</th><th>Name</th><th>Phone</th><th>State</th><th>Institution</th><th>Status</th><th>Join Date</th></tr>
-    </thead><tbody>`;
-  contacts.forEach((c,i)=>{
-    html+=`<tr>
-      <td>${i+1}</td>
-      <td>${c.name}</td>
-      <td>${c.phone}</td>
-      <td>${c.state||''}</td>
-      <td>${c.institution||''}</td>
-      <td>${c.status||'New'}</td>
-      <td>${c.joindate||''}</td>
-    </tr>`;
-  });
-  html+='</tbody></table>';
-  document.getElementById('contacts-table').innerHTML=html;
-}
-
-function generateVCF(contact){
+function generateVCFContent(contact){
   return `BEGIN:VCARD\r\nVERSION:3.0\r\nFN:${contact.name}\r\nN:${contact.name};;;\r\nTEL;TYPE=CELL:${contact.phone}\r\nNOTE:State:${contact.state||''} | Institution:${contact.institution||''}\r\nEND:VCARD\r\n`;
 }
 
-function downloadVCF(status){
-  const filtered=contacts.filter(c=>c.status===status);
-  if(!filtered.length){alert(`No ${status} contacts found.`);return;}
-  const totalBatches=Math.ceil(filtered.length/CONTACTS_PER_BATCH);
-  const container=document.getElementById('vcf-batches');
+// Batch download helper
+function downloadVCFBatches(contacts,filenamePrefix){
+  const totalBatches=Math.ceil(contacts.length/CONTACTS_PER_BATCH);
+  const container=document.getElementById('vcf-table-container');
   container.innerHTML='';
-  const now=new Date();
-  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
   for(let i=0;i<totalBatches;i++){
-    const batch=filtered.slice(i*CONTACTS_PER_BATCH,(i+1)*CONTACTS_PER_BATCH);
-    let vcfContent='';
-    batch.forEach(c=>vcfContent+=generateVCF(c));
-    const blob=new Blob([vcfContent],{type:'text/vcard;charset=utf-8'});
+    const batch=contacts.slice(i*CONTACTS_PER_BATCH,(i+1)*CONTACTS_PER_BATCH);
+    let content='';
+    batch.forEach(c=>content+=generateVCFContent(c));
+    const filename=`${filenamePrefix}_Batch${i+1}.vcf`;
+    const blob=new Blob([content],{type:"text/vcard;charset=utf-8"});
     const blobUrl=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=blobUrl;
-    a.download=`CampusConnect_${status}_Batch${i+1}_${dateStr}.vcf`;
+    a.href=blobUrl;a.download=filename;
     a.className='action-button green';
-    a.innerHTML=`<i class="fas fa-file-download"></i> Download Batch ${i+1} (${batch.length} contacts)`;
+    a.innerText=`Download Batch ${i+1} (${batch.length} contacts)`;
     container.appendChild(a);
   }
-  alert(`${totalBatches} batch(es) ready for ${status} contacts.`);
 }
 
-async function markAsDownloaded(){
-  if(!confirm("Are you sure you want to mark all New contacts as downloaded?")) return;
-  const newContacts=contacts.filter(c=>c.status==='New');
-  for(const c of newContacts){
-    await fetch(`${API_URL}/id/${c.id}`,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:{status:'Old'}})
-    });
-    c.status='Old';
-  }
-  alert(`${newContacts.length} contacts marked as Old.`);
-  renderContactsTable();
-  document.getElementById('vcf-batches').innerHTML='';
+function downloadNewMembersVCF(){
+  const newMembers=allContactsData.filter(c=>c.status==="new");
+  if(newMembers.length===0){alert("No new members found."); return;}
+  downloadVCFBatches(newMembers,'CampusConnect_NewMembers');
 }
+
+function downloadAllMembersVCF(){
+  if(allContactsData.length===0){alert("No contacts available."); return;}
+  downloadVCFBatches(allContactsData,'CampusConnect_AllMembers');
+}
+
+// Optimized Mark New as Download → convert to Old and update SheetDB
+async function markNewAsDownloaded(){
+    const newContacts = allContactsData.filter(c => c.status === "new");
+    if(newContacts.length === 0){ 
+        alert("No new contacts to mark as downloaded."); 
+        return; 
+    }
+
+    // Update locally
+    newContacts.forEach(c => c.status = "old");
+    displayVCFTable();
+
+    // Split into update vs add
+    const existingPhones = allContactsData.map(c=>c.phone);
+    const contactsToAdd = newContacts.filter(c => !existingPhones.includes(c.phone));
+    const contactsToUpdate = newContacts.filter(c => existingPhones.includes(c.phone));
+
+    // Prepare batch update for SheetDB (existing contacts)
+    const batchUpdates = contactsToUpdate.map(c => ({
+        search: { phone: c.phone },
+        data: { status: "old" }
+    }));
+
+    // Prepare batch add for SheetDB (new contacts not in sheet)
+    const batchAdd = contactsToAdd.map(c => ({
+        name: c.name,
+        phone: c.phone,
+        status: "old",
+        state: c.state || "",
+        institution: c.institution || ""
+    }));
+
+    try {
+        // PATCH existing
+        if(batchUpdates.length > 0){
+            await fetch(`${API_URL}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: batchUpdates })
+            });
+        }
+        // POST new
+        if(batchAdd.length > 0){
+            await fetch(`${API_URL}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: batchAdd })
+            });
+        }
+        alert("All new contacts have been marked as old and updated in the database.");
+    } catch(err) {
+        console.error("Failed to update SheetDB:", err);
+        alert("Failed to update new contacts. Please try again.");
+    }
+}
+
+function displayWhatsAppContacts(data){
+  const div=document.getElementById('whatsapp-contacts-table');
+  if(!data || data.length===0){div.innerHTML="No WhatsApp contacts."; return;}
+  let table=`<table><thead><tr><th>S/N</th><th>Name</th><th>Phone</th><th>State</th><th>Status</th></tr></thead><tbody>`;
+  data.forEach((c,i)=>{
+    const badgeClass=c.status==="new"?"badge-new":"badge-old";
+    table+=`<tr><td>${i+1}</td><td>${c.name}</td><td>${c.phone}</td><td>${c.state||''}</td><td><span class="badge ${badgeClass}">${c.status.toUpperCase()}</span></td></tr>`;
+  });
+  table+='</tbody></table>'; div.innerHTML=table;
+}
+
+function displayVCFTable(){
+  const container=document.getElementById('vcf-table-container');
+  if(!allContactsData || allContactsData.length===0){container.innerHTML="No contacts available."; return;}
+  let table=`<table><thead><tr><th>S/N</th><th>Name</th><th>Phone</th><th>State</th><th>Institution</th><th>Status</th></tr></thead><tbody>`;
+  allContactsData.forEach((c,i)=>{
+    const badgeClass=c.status==="new"?"badge-new":"badge-old";
+    table+=`<tr><td>${i+1}</td><td>${c.name}</td><td>${c.phone}</td><td>${c.state||''}</td><td>${c.institution||''}</td><td><span class="badge ${badgeClass}">${c.status.toUpperCase()}</span></td></tr>`;
+  });
+  table+='</tbody></table>';
+  container.innerHTML=table;
+}
+
+document.addEventListener('DOMContentLoaded',fetchAllContacts);
 </script>
-
 </body>
 </html>
