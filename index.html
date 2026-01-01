@@ -5,259 +5,303 @@
 <title>CampusConnect NG – Admin Panel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d6efd">
+<meta name="theme-color" content="#007BFF">
 
 <style>
 :root{
---blue:#0d6efd;
---green:#198754;
---red:#dc3545;
+--blue:#007BFF;
+--green:#28A745;
+--red:#DC3545;
+--gray:#6c757d;
 --light:#f8f9fa;
---border:#dee2e6;
+--border:#ced4da;
+--shadow:rgba(0,0,0,.15);
 }
 body{
 margin:0;
-font-family:system-ui,-apple-system,Segoe UI,Roboto;
+font-family:Segoe UI,Roboto,sans-serif;
 background:var(--light);
-}
-#offlineBanner{
-display:none;
-background:var(--red);
-color:#fff;
-padding:8px;
-text-align:center;
-font-weight:700;
+display:flex;
+justify-content:center;
 }
 .container{
-max-width:1100px;
-margin:auto;
-padding:15px;
+width:95%;
+max-width:1000px;
+background:#fff;
+margin:30px 0;
+padding:30px;
+border-radius:12px;
+box-shadow:0 8px 25px var(--shadow);
 }
-h1{text-align:center;color:var(--blue)}
+h1{text-align:center;color:var(--blue);}
 .tabs{
 display:flex;
 gap:10px;
-flex-wrap:wrap;
 border-bottom:2px solid var(--border);
-margin-bottom:15px;
+margin-bottom:20px;
+flex-wrap:wrap;
 }
 .tab{
-padding:10px 16px;
+padding:10px 18px;
 cursor:pointer;
 font-weight:600;
+color:var(--gray);
+border-radius:8px 8px 0 0;
 }
 .tab.active{
-border-bottom:3px solid var(--blue);
+background:#fff;
 color:var(--blue);
+border:1px solid var(--border);
+border-bottom:none;
 }
 .actions{
+margin:15px 0;
 display:flex;
-gap:10px;
+gap:15px;
 flex-wrap:wrap;
-margin-bottom:15px;
 }
 button{
 border:none;
-padding:10px 16px;
+padding:12px 22px;
 border-radius:8px;
 font-weight:700;
 cursor:pointer;
 color:#fff;
 }
-.green{background:var(--green)}
-.red{background:var(--red)}
-.blue{background:var(--blue)}
-
+.btn-green{background:var(--green)}
+.btn-blue{background:var(--blue)}
+.btn-red{background:var(--red)}
 table{
 width:100%;
 border-collapse:collapse;
-background:#fff;
 }
 th,td{
 border:1px solid var(--border);
-padding:8px;
+padding:9px;
 font-size:.9rem;
+transition:background .5s;
 }
-th{background:#f1f3f5}
-
+th{background:#f1f3f5;}
 .badge{
-padding:4px 8px;
+padding:3px 8px;
 border-radius:10px;
 font-size:.75rem;
-font-weight:700;
 color:#fff;
+font-weight:bold;
 }
-.new{background:var(--green)}
-.old{background:var(--red)}
-
-.hidden{display:none}
+.badge-new{background:var(--green);}
+.badge-old{background:var(--red);}
+.hidden{display:none;}
+.batch-box{
+border:1px solid var(--border);
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+background:#f8f9fa;
+}
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:.85rem;
+color:#666;
+}
+@media(max-width:768px){
+.container{padding:20px;}
+.actions{flex-direction:column;}
+button{width:100%;}
+}
 </style>
 </head>
 
 <body>
-
-<div id="offlineBanner">📴 Offline mode — showing last saved data</div>
-
 <div class="container">
-<h1>CampusConnect NG Admin</h1>
+<h1>CampusConnect NG – Admin Panel</h1>
 
 <div class="tabs">
-<div class="tab active" onclick="openTab('members')">Members</div>
+<div class="tab active" onclick="openTab('main')">Members</div>
+<div class="tab" onclick="openTab('old')">OLD Members</div>
 <div class="tab" onclick="openTab('institutions')">Institutions</div>
-<div class="tab" onclick="openTab('downloads')">Downloads</div>
+<div class="tab" onclick="openTab('download')">Download</div>
 </div>
 
 <!-- MEMBERS -->
-<div id="members">
+<div id="main">
 <div class="actions">
-<button class="green" onclick="downloadType('new')">⬇ Download NEW</button>
-<button class="red" onclick="downloadType('old')">⬇ Download OLD</button>
-<button class="blue" onclick="downloadType('all')">⬇ Download ALL</button>
+<button class="btn-green" onclick="downloadAndMarkNew()">⬇ Download NEW & Auto-OLD</button>
 </div>
-<div id="membersTable">Loading…</div>
+<div id="members-table">Loading…</div>
+</div>
+
+<!-- OLD MEMBERS -->
+<div id="old" class="hidden">
+<div class="actions">
+<button class="btn-red" onclick="markAllOld()">✅ Mark ALL NEW as OLD</button>
+</div>
+<div id="old-table">Loading…</div>
 </div>
 
 <!-- INSTITUTIONS -->
 <div id="institutions" class="hidden">
-<div id="institutionTable"></div>
+<div id="institution-table">Loading…</div>
 </div>
 
-<!-- DOWNLOADS -->
-<div id="downloads" class="hidden">
-<div id="downloadInfo">Select a download option above.</div>
+<!-- DOWNLOAD -->
+<div id="download" class="hidden">
+<div class="actions">
+<button class="btn-green" onclick="downloadContacts('new')">⬇ Download NEW (Batch 100)</button>
+<button class="btn-red" onclick="downloadContacts('old')">⬇ Download OLD (Batch 100)</button>
+<button class="btn-blue" onclick="downloadContacts('all')">⬇ Download ALL (Batch 100)</button>
+</div>
+<div id="download-table"></div>
 </div>
 
+<div class="footer">CampusConnect NG • Admin Only</div>
 </div>
 
 <script>
 const API="https://sheetdb.io/api/v1/lcqbyo961rmzf";
+const BATCH_SIZE=100;
 let contacts=[];
 
-/* TABS */
+function isOld(c){return String(c.status||"").toLowerCase().trim()==="old";}
+function isNew(c){return !isOld(c);}
+
 function openTab(id){
-document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-event.target.classList.add('active');
-["members","institutions","downloads"].forEach(x=>document.getElementById(x).classList.add("hidden"));
-document.getElementById(id).classList.remove("hidden");
+document.querySelectorAll('#main,#old,#institutions,#download').forEach(d=>d.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+renderTables(id);
 }
 
-/* ONLINE STATUS */
-function updateOnline(){
-document.getElementById("offlineBanner").style.display=navigator.onLine?"none":"block";
-}
-window.addEventListener("online",updateOnline);
-window.addEventListener("offline",updateOnline);
-updateOnline();
-
-/* LOAD DATA */
 async function load(){
 try{
-const res=await fetch(API);
-contacts=await res.json();
-localStorage.setItem("cc_cache",JSON.stringify(contacts));
-renderMembers();
-renderInstitutions();
-}catch{
-const cache=localStorage.getItem("cc_cache");
-if(cache){
-contacts=JSON.parse(cache);
-renderMembers();
-renderInstitutions();
-}else{
-document.getElementById("membersTable").innerHTML="❌ No data available";
+const res = await fetch(API);
+contacts = await res.json();
+contacts.sort((a,b)=>new Date(b.joindate)-new Date(a.joindate));
+renderTables(document.querySelector('.tab.active').textContent.toLowerCase());
+}catch(e){
+document.getElementById("members-table").innerHTML="Failed to load data.";
 }
 }
-}
+setInterval(load,5000);
 load();
-setInterval(load,15000);
 
-/* RENDER MEMBERS */
-function renderMembers(){
-const rows=contacts.map(c=>{
-const isOld=c.status==="old";
-return `<tr>
-<td><span class="badge ${isOld?'old':'new'}">${isOld?'OLD':'NEW'}</span></td>
-<td>${c.name||''}</td>
+const STATES_ABBR = {
+"Abia":"ABI","Adamawa":"ADA","Akwa Ibom":"AKW","Anambra":"ANA","FCT Abuja":"FCT","Bauchi":"BAU",
+"Bayelsa":"BAY","Benue":"BEN","Borno":"BOR","Cross River":"CRS","Delta":"DEL","Ebonyi":"EBY","Edo":"EDO",
+"Ekiti":"EKI","Enugu":"ENU","Gombe":"GOM","Imo":"IMO","Jigawa":"JIG","Kaduna":"KAD","Kano":"KAN",
+"Katsina":"KTS","Kebbi":"KEB","Kogi":"KOG","Kwara":"KWA","Lagos":"LAG","Nasarawa":"NAS","Niger":"NIG",
+"Ogun":"OGU","Ondo":"OND","Osun":"OSU","Oyo":"OYO","Plateau":"PLT","Rivers":"RIV","Sokoto":"SOK","Taraba":"TAR","Yobe":"YOB","Zamfara":"ZAM"
+};
+
+function renderTables(tab){
+if(tab==='members' || tab==='main') renderMainTable();
+else if(tab==='old') renderOldTable();
+else if(tab==='institutions') renderInstitutionTable();
+else if(tab==='download') renderDownloadTable();
+}
+
+function renderMainTable(){
+document.getElementById("members-table").innerHTML=`<table>
+<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th></tr>
+${contacts.map(c=>`<tr>
+<td><span class="badge ${isNew(c)?'badge-new':'badge-old'}">${isNew(c)?'NEW':'OLD'}</span></td>
+<td>${c.name}</td>
 <td>${c.state||''}</td>
-<td>${c.phone||''}</td>
-<td>${c.institution||''}</td>
-</tr>`;
-}).join("");
-
-document.getElementById("membersTable").innerHTML=`
-<table>
-<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th><th>Institution</th></tr>
-${rows}
-</table>`;
+<td>${c.phone}</td>
+</tr>`).join('')}</table>`;
 }
 
-/* INSTITUTION ANALYSIS */
-function renderInstitutions(){
+function renderOldTable(){
+document.getElementById("old-table").innerHTML=`<table>
+<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th></tr>
+${contacts.filter(isOld).map(c=>`<tr>
+<td><span class="badge badge-old">OLD</span></td>
+<td>${c.name}</td>
+<td>${c.state||''}</td>
+<td>${c.phone}</td>
+</tr>`).join('')}</table>`;
+}
+
+function renderInstitutionTable(){
 const map={};
-contacts.forEach(c=>{
-const k=c.institution||"Unknown";
-map[k]=(map[k]||0)+1;
-});
-document.getElementById("institutionTable").innerHTML=`
-<table>
-<tr><th>Institution</th><th>Total</th></tr>
-${Object.entries(map).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("")}
-</table>`;
+contacts.forEach(c=>{const key=c.institution||"Unknown"; map[key]=(map[key]||0)+1;});
+document.getElementById("institution-table").innerHTML=`<table>
+<tr><th>Institution</th><th>Total Members</th></tr>
+${Object.entries(map).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table>`;
 }
 
-/* DOWNLOAD LOGIC */
-function downloadType(type){
-if(!navigator.onLine) return alert("Offline — cannot download");
+function renderDownloadTable(){
+document.getElementById("download-table").innerHTML=`<p>Use the buttons above to download contacts in batches of 100, with state abbreviations, no duplicates.</p>`;
+}
 
-let list=[...contacts];
-if(type==="new") list=list.filter(c=>c.status!=="old");
-if(type==="old") list=list.filter(c=>c.status==="old");
+async function downloadAndMarkNew(){
+const newMembers=contacts.filter(isNew);
+if(!newMembers.length) return alert("No NEW members.");
+downloadInBatches(newMembers,"NEW");
+for(const c of newMembers){
+try{
+await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
+method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:[{status:"old"}]})
+});
+} catch(e){console.error(e);}
+c.status='old';
+}
+alert("NEW members downloaded & auto-marked as OLD");
+load();
+}
 
-const unique={};
-list.forEach(c=>unique[c.phone]=c);
-list=Object.values(unique);
+async function markAllOld(){
+const newMembers=contacts.filter(isNew);
+if(!newMembers.length) return alert("No NEW members.");
+for(const c of newMembers){
+try{
+await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
+method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:[{status:"old"}]})
+});
+} catch(e){console.error(e);}
+c.status='old';
+}
+alert("All NEW members marked as OLD!");
+load();
+}
 
-const chunks=[];
-while(list.length) chunks.push(list.splice(0,100));
+function downloadContacts(type){
+let list=[];
+if(type==='new') list=contacts.filter(isNew);
+else if(type==='old') list=contacts.filter(isOld);
+else list=contacts.slice();
+if(!list.length) return alert(`No ${type.toUpperCase()} members.`);
+downloadInBatches(list,type);
+}
 
-chunks.forEach((chunk,i)=>{
-const vcf=chunk.map(c=>{
-const st=(c.state||"").substring(0,3).toUpperCase();
-return `BEGIN:VCARD
+function downloadInBatches(list,type){
+const seen=new Set();
+const filtered=list.filter(c=>{if(seen.has(c.phone)) return false; seen.add(c.phone); return true;});
+for(let i=0;i<filtered.length;i+=BATCH_SIZE){
+const batch=filtered.slice(i,i+BATCH_SIZE);
+const content=batch.map(c=>`BEGIN:VCARD
 VERSION:3.0
-FN:${c.name} (${st})
+FN:${c.name}
 TEL:${c.phone}
-END:VCARD`;
-}).join("\n");
-
-const blob=new Blob([vcf],{type:"text/vcard"});
+NOTE:State:${STATES_ABBR[c.state]||c.state||''}
+END:VCARD`).join("\n");
+const blob=new Blob([content],{type:"text/vcard"});
 const a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download=`CampusConnect_${type}_${i+1}.vcf`;
+a.download=`CampusConnect_${type}_Batch${i/BATCH_SIZE+1}.vcf`;
 a.click();
-});
-
-autoMarkOld();
+URL.revokeObjectURL(a.href);
+}
 }
 
-/* AUTO MARK OLD */
-async function autoMarkOld(){
-for(const c of contacts.filter(c=>c.status!=="old")){
-await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
-method:"PATCH",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({data:[{status:"old"}]})
-});
-}
-load();
-}
-
-/* SERVICE WORKER */
+/* --- Service Worker Registration for PWA --- */
 if('serviceWorker' in navigator){
-navigator.serviceWorker.register("sw.js");
+navigator.serviceWorker.register('sw.js')
+.then(()=>console.log('Service Worker Registered'))
+.catch(e=>console.error('SW registration failed',e));
 }
 </script>
-
 </body>
 </html>
