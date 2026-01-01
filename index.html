@@ -11,54 +11,143 @@
 --green:#28A745;
 --red:#DC3545;
 --gray:#6c757d;
---light:#f8f9fa;
---border:#ced4da;
+--light:#f4f6f9;
+--border:#dee2e6;
+--card:#ffffff;
 }
+
+*{box-sizing:border-box}
+
 body{
 margin:0;
 font-family:Segoe UI,Roboto,sans-serif;
 background:var(--light);
-display:flex;
-justify-content:center;
 }
+
 .container{
-width:95%;
-max-width:950px;
-background:#fff;
-margin:30px 0;
-padding:30px;
-border-radius:12px;
-box-shadow:0 8px 25px rgba(0,0,0,.15);
+max-width:1100px;
+margin:20px auto;
+background:var(--card);
+padding:20px;
+border-radius:14px;
+box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
-h1{text-align:center;color:var(--blue);}
-.tabs{display:flex;gap:10px;border-bottom:2px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
-.tab{padding:10px 18px;cursor:pointer;font-weight:600;color:var(--gray);}
-.tab.active{color:var(--blue);border-bottom:3px solid var(--blue);}
-.actions{margin:15px 0;display:flex;gap:15px;flex-wrap:wrap;}
-button{border:none;padding:12px 22px;border-radius:8px;font-weight:700;color:#fff;cursor:pointer;}
+
+h1{
+text-align:center;
+color:var(--blue);
+margin-bottom:15px;
+font-size:1.6rem;
+}
+
+.tabs{
+display:flex;
+gap:10px;
+border-bottom:2px solid var(--border);
+margin-bottom:15px;
+overflow-x:auto;
+}
+
+.tab{
+padding:10px 16px;
+cursor:pointer;
+font-weight:600;
+color:var(--gray);
+white-space:nowrap;
+}
+
+.tab.active{
+color:var(--blue);
+border-bottom:3px solid var(--blue);
+}
+
+.actions{
+margin:15px 0;
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+}
+
+button{
+border:none;
+padding:12px 18px;
+border-radius:10px;
+font-weight:700;
+color:#fff;
+cursor:pointer;
+font-size:.9rem;
+}
+
 .btn-green{background:var(--green)}
 .btn-blue{background:var(--blue)}
 .btn-red{background:var(--red)}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid var(--border);padding:9px;font-size:.9rem}
-th{background:#f1f3f5}
-.badge{padding:3px 8px;border-radius:10px;font-size:.75rem;color:#fff;font-weight:bold}
+
+.table-wrap{
+overflow-x:auto;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+min-width:600px;
+}
+
+th,td{
+border:1px solid var(--border);
+padding:10px;
+font-size:.9rem;
+text-align:left;
+}
+
+th{
+background:#f1f3f5;
+font-weight:700;
+}
+
+.badge{
+padding:4px 10px;
+border-radius:12px;
+font-size:.7rem;
+color:#fff;
+font-weight:700;
+}
+
 .badge-new{background:var(--green)}
 .badge-old{background:var(--red)}
+
 .hidden{display:none}
-.footer{text-align:center;margin-top:20px;font-size:.85rem;color:#666}
+
+.card{
+background:#f8f9fa;
+border-radius:12px;
+padding:15px;
+margin-bottom:15px;
+}
+
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:.8rem;
+color:#777;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+h1{font-size:1.3rem}
+button{width:100%}
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h1>Admin VCF Download Panel</h1>
+<h1>CampusConnect NG – Admin Panel</h1>
 
 <div class="tabs">
-<div class="tab active" onclick="openTab('main')">Members</div>
-<div class="tab" onclick="openTab('mark')">Mark as Downloaded</div>
-<div class="tab" onclick="openTab('institution')">Institutions</div>
+<div class="tab active" onclick="openTab('main',this)">Members</div>
+<div class="tab" onclick="openTab('mark',this)">Mark as Downloaded</div>
+<div class="tab" onclick="openTab('institution',this)">Institutions</div>
 </div>
 
 <!-- MEMBERS -->
@@ -67,7 +156,7 @@ th{background:#f1f3f5}
 <button class="btn-green" onclick="downloadNew()">⬇ Download NEW</button>
 <button class="btn-blue" onclick="downloadAll()">⬇ Download ALL</button>
 </div>
-<div id="members-table">Loading…</div>
+<div class="table-wrap" id="members-table">Loading…</div>
 </div>
 
 <!-- MARK -->
@@ -75,12 +164,12 @@ th{background:#f1f3f5}
 <div class="actions">
 <button class="btn-red" onclick="markAllOld()">✅ Mark ALL NEW as OLD</button>
 </div>
-<div id="mark-table"></div>
+<div class="table-wrap" id="mark-table"></div>
 </div>
 
 <!-- INSTITUTION -->
 <div id="institution" class="hidden">
-<div id="institution-table"></div>
+<div class="table-wrap" id="institution-table"></div>
 </div>
 
 <div class="footer">CampusConnect NG • Admin Only</div>
@@ -90,10 +179,15 @@ th{background:#f1f3f5}
 const API="https://sheetdb.io/api/v1/lcqbyo961rmzf";
 let contacts=[];
 
-/* TABS */
-function openTab(id){
+/* TAB HANDLER */
+function openTab(id,el){
 document.querySelectorAll('#main,#mark,#institution').forEach(d=>d.classList.add('hidden'));
 document.getElementById(id).classList.remove('hidden');
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+el.classList.add('active');
+
+if(id==='institution') renderInstitutionTable();
+if(id==='mark') renderMarkTable();
 }
 
 /* LOAD DATA */
@@ -104,13 +198,13 @@ contacts=await res.json();
 contacts.sort((a,b)=>new Date(b.joindate)-new Date(a.joindate));
 renderMain();
 }catch(e){
-document.getElementById("members-table").innerHTML="Failed to load data.";
+document.getElementById("members-table").innerHTML="❌ Failed to load data.";
 }
 }
 load();
 setInterval(load,10000);
 
-/* MAIN TABLE */
+/* MAIN */
 function renderMain(){
 document.getElementById("members-table").innerHTML=`
 <table>
@@ -120,27 +214,25 @@ const isNew=c.status!=='old';
 return `
 <tr>
 <td><span class="badge ${isNew?'badge-new':'badge-old'}">${isNew?'NEW':'OLD'}</span></td>
-<td>${c.name}</td>
+<td>${c.name||''}</td>
 <td>${c.state||''}</td>
-<td>${c.phone}</td>
+<td>${c.phone||''}</td>
 </tr>`;
 }).join('')}
 </table>`;
 }
 
-/* DOWNLOAD NEW */
+/* DOWNLOADS */
 function downloadNew(){
 const list=contacts.filter(c=>c.status!=='old');
 if(!list.length) return alert("No NEW members.");
 downloadVCF(list,"CampusConnect_NEW.vcf");
 }
 
-/* DOWNLOAD ALL */
 function downloadAll(){
 downloadVCF(contacts,"CampusConnect_ALL.vcf");
 }
 
-/* VCF */
 function downloadVCF(list,name){
 const content=list.map(c=>`BEGIN:VCARD
 VERSION:3.0
@@ -169,17 +261,41 @@ alert("All NEW marked as OLD");
 load();
 }
 
-/* INSTITUTIONS */
+/* MARK TABLE */
+function renderMarkTable(){
+const list=contacts.filter(c=>c.status!=='old');
+document.getElementById("mark-table").innerHTML=`
+<table>
+<tr><th>Name</th><th>Phone</th><th>State</th></tr>
+${list.map(c=>`
+<tr>
+<td>${c.name||''}</td>
+<td>${c.phone||''}</td>
+<td>${c.state||''}</td>
+</tr>`).join('')}
+</table>`;
+}
+
+/* INSTITUTION ANALYSIS */
 function renderInstitutionTable(){
 const map={};
 contacts.forEach(c=>{
-const k=c.institution||"Unknown";
-map[k]=(map[k]||0)+1;
+const key=c.institution||"Unknown";
+map[key]=(map[key]||0)+1;
 });
+const total=contacts.length||1;
+
 document.getElementById("institution-table").innerHTML=`
 <table>
-<tr><th>Institution</th><th>Total</th></tr>
-${Object.entries(map).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+<tr><th>Institution</th><th>Total</th><th>%</th></tr>
+${Object.entries(map)
+.sort((a,b)=>b[1]-a[1])
+.map(([k,v])=>`
+<tr>
+<td>${k}</td>
+<td>${v}</td>
+<td>${((v/total)*100).toFixed(1)}%</td>
+</tr>`).join('')}
 </table>`;
 }
 </script>
