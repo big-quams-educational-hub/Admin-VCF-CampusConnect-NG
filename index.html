@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CampusConnect NG – Admin VCF Panel</title>
+<title>CampusConnect NG – Admin Panel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root{
---blue:#007BFF;
---green:#28A745;
---red:#DC3545;
+--blue:#0d6efd;
+--green:#198754;
+--red:#dc3545;
 --gray:#6c757d;
---light:#f4f6f9;
+--light:#f8f9fa;
 --border:#dee2e6;
---card:#ffffff;
 }
 
 *{box-sizing:border-box}
@@ -22,30 +21,32 @@ body{
 margin:0;
 font-family:Segoe UI,Roboto,sans-serif;
 background:var(--light);
+display:flex;
+justify-content:center;
 }
 
 .container{
+width:95%;
 max-width:1100px;
-margin:20px auto;
-background:var(--card);
+background:#fff;
+margin:20px 0;
 padding:20px;
 border-radius:14px;
-box-shadow:0 10px 30px rgba(0,0,0,.08);
+box-shadow:0 10px 30px rgba(0,0,0,.12);
 }
 
 h1{
 text-align:center;
 color:var(--blue);
-margin-bottom:15px;
-font-size:1.6rem;
+margin-bottom:10px;
 }
 
 .tabs{
 display:flex;
-gap:10px;
+gap:8px;
+flex-wrap:wrap;
 border-bottom:2px solid var(--border);
 margin-bottom:15px;
-overflow-x:auto;
 }
 
 .tab{
@@ -53,7 +54,6 @@ padding:10px 16px;
 cursor:pointer;
 font-weight:600;
 color:var(--gray);
-white-space:nowrap;
 }
 
 .tab.active{
@@ -62,54 +62,47 @@ border-bottom:3px solid var(--blue);
 }
 
 .actions{
-margin:15px 0;
 display:flex;
-gap:12px;
+gap:10px;
 flex-wrap:wrap;
+margin-bottom:15px;
 }
 
 button{
 border:none;
-padding:12px 18px;
-border-radius:10px;
+padding:10px 18px;
+border-radius:8px;
 font-weight:700;
 color:#fff;
 cursor:pointer;
-font-size:.9rem;
 }
 
 .btn-green{background:var(--green)}
 .btn-blue{background:var(--blue)}
 .btn-red{background:var(--red)}
 
-.table-wrap{
-overflow-x:auto;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
-min-width:600px;
+font-size:.9rem;
 }
 
 th,td{
 border:1px solid var(--border);
-padding:10px;
-font-size:.9rem;
+padding:8px;
 text-align:left;
 }
 
 th{
 background:#f1f3f5;
-font-weight:700;
 }
 
 .badge{
-padding:4px 10px;
+padding:3px 8px;
 border-radius:12px;
-font-size:.7rem;
-color:#fff;
+font-size:.75rem;
 font-weight:700;
+color:#fff;
 }
 
 .badge-new{background:var(--green)}
@@ -117,24 +110,11 @@ font-weight:700;
 
 .hidden{display:none}
 
-.card{
-background:#f8f9fa;
-border-radius:12px;
-padding:15px;
-margin-bottom:15px;
-}
-
 .footer{
 text-align:center;
-margin-top:20px;
-font-size:.8rem;
+margin-top:15px;
+font-size:.85rem;
 color:#777;
-}
-
-/* MOBILE */
-@media(max-width:600px){
-h1{font-size:1.3rem}
-button{width:100%}
 }
 </style>
 </head>
@@ -145,18 +125,24 @@ button{width:100%}
 <h1>CampusConnect NG – Admin Panel</h1>
 
 <div class="tabs">
-<div class="tab active" onclick="openTab('main',this)">Members</div>
-<div class="tab" onclick="openTab('mark',this)">Mark as Downloaded</div>
-<div class="tab" onclick="openTab('institution',this)">Institutions</div>
+<div class="tab active" onclick="openTab('members',this)">Members</div>
+<div class="tab" onclick="openTab('downloads',this)">Downloads</div>
+<div class="tab" onclick="openTab('mark',this)">Mark as Old</div>
+<div class="tab" onclick="openTab('institutions',this)">Institutions</div>
 </div>
 
 <!-- MEMBERS -->
-<div id="main">
+<div id="members">
+<div id="members-table">Loading…</div>
+</div>
+
+<!-- DOWNLOADS -->
+<div id="downloads" class="hidden">
 <div class="actions">
-<button class="btn-green" onclick="downloadNew()">⬇ Download NEW</button>
+<button class="btn-green" onclick="downloadByStatus('new')">⬇ Download NEW</button>
+<button class="btn-red" onclick="downloadByStatus('old')">⬇ Download OLD</button>
 <button class="btn-blue" onclick="downloadAll()">⬇ Download ALL</button>
 </div>
-<div class="table-wrap" id="members-table">Loading…</div>
 </div>
 
 <!-- MARK -->
@@ -164,12 +150,12 @@ button{width:100%}
 <div class="actions">
 <button class="btn-red" onclick="markAllOld()">✅ Mark ALL NEW as OLD</button>
 </div>
-<div class="table-wrap" id="mark-table"></div>
+<div id="mark-table"></div>
 </div>
 
-<!-- INSTITUTION -->
-<div id="institution" class="hidden">
-<div class="table-wrap" id="institution-table"></div>
+<!-- INSTITUTIONS -->
+<div id="institutions" class="hidden">
+<div id="institution-table"></div>
 </div>
 
 <div class="footer">CampusConnect NG • Admin Only</div>
@@ -181,13 +167,14 @@ let contacts=[];
 
 /* TAB HANDLER */
 function openTab(id,el){
-document.querySelectorAll('#main,#mark,#institution').forEach(d=>d.classList.add('hidden'));
+document.querySelectorAll('#members,#downloads,#mark,#institutions')
+.forEach(d=>d.classList.add('hidden'));
 document.getElementById(id).classList.remove('hidden');
 document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
 el.classList.add('active');
 
-if(id==='institution') renderInstitutionTable();
 if(id==='mark') renderMarkTable();
+if(id==='institutions') renderInstitutionTable();
 }
 
 /* LOAD DATA */
@@ -196,19 +183,21 @@ try{
 const res=await fetch(API);
 contacts=await res.json();
 contacts.sort((a,b)=>new Date(b.joindate)-new Date(a.joindate));
-renderMain();
-}catch(e){
-document.getElementById("members-table").innerHTML="❌ Failed to load data.";
+renderMembers();
+}catch{
+document.getElementById("members-table").innerHTML="❌ Failed to load contacts.";
 }
 }
 load();
 setInterval(load,10000);
 
-/* MAIN */
-function renderMain(){
+/* MEMBERS TABLE */
+function renderMembers(){
 document.getElementById("members-table").innerHTML=`
 <table>
-<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th></tr>
+<tr>
+<th>Status</th><th>Name</th><th>State</th><th>Phone</th><th>Institution</th>
+</tr>
 ${contacts.map(c=>{
 const isNew=c.status!=='old';
 return `
@@ -217,38 +206,71 @@ return `
 <td>${c.name||''}</td>
 <td>${c.state||''}</td>
 <td>${c.phone||''}</td>
+<td>${c.institution||''}</td>
 </tr>`;
 }).join('')}
 </table>`;
 }
 
-/* DOWNLOADS */
-function downloadNew(){
-const list=contacts.filter(c=>c.status!=='old');
-if(!list.length) return alert("No NEW members.");
-downloadVCF(list,"CampusConnect_NEW.vcf");
+/* HELPERS */
+function stateAbbr(state){
+if(!state) return "UNK";
+return state.replace(/[^a-zA-Z]/g,'').substring(0,3).toUpperCase();
+}
+
+function uniqueContacts(list){
+const map=new Map();
+list.forEach(c=>{
+if(c.phone && !map.has(c.phone)){
+map.set(c.phone,c);
+}
+});
+return Array.from(map.values());
+}
+
+function chunk(arr,size){
+const chunks=[];
+for(let i=0;i<arr.length;i+=size){
+chunks.push(arr.slice(i,i+size));
+}
+return chunks;
+}
+
+function vcf(c){
+return `BEGIN:VCARD
+VERSION:3.0
+FN:${c.name||'Unknown'} – ${stateAbbr(c.state)}
+N:${c.name||'Unknown'}
+TEL:${c.phone}
+END:VCARD`;
+}
+
+/* DOWNLOAD LOGIC */
+function downloadContacts(list,base){
+const clean=uniqueContacts(list);
+if(!clean.length) return alert("No contacts available.");
+
+chunk(clean,100).forEach((batch,i)=>{
+const blob=new Blob([batch.map(vcf).join("\n")],{type:"text/vcard"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download=`${base}_${i+1}.vcf`;
+a.click();
+});
+}
+
+function downloadByStatus(type){
+const list=contacts.filter(c=>type==='new'?c.status!=='old':c.status==='old');
+downloadContacts(list,`CampusConnect_${type.toUpperCase()}`);
 }
 
 function downloadAll(){
-downloadVCF(contacts,"CampusConnect_ALL.vcf");
-}
-
-function downloadVCF(list,name){
-const content=list.map(c=>`BEGIN:VCARD
-VERSION:3.0
-FN:${c.name}
-TEL:${c.phone}
-END:VCARD`).join("\n");
-const blob=new Blob([content],{type:"text/vcard"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download=name;
-a.click();
+downloadContacts(contacts,"CampusConnect_ALL");
 }
 
 /* MARK OLD */
 async function markAllOld(){
-if(!confirm("Mark all NEW as OLD?")) return;
+if(!confirm("Mark all NEW contacts as OLD?")) return;
 const list=contacts.filter(c=>c.status!=='old');
 for(const c of list){
 await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
@@ -257,7 +279,7 @@ headers:{"Content-Type":"application/json"},
 body:JSON.stringify({data:[{status:"old"}]})
 });
 }
-alert("All NEW marked as OLD");
+alert("All NEW contacts marked as OLD");
 load();
 }
 
@@ -280,21 +302,23 @@ ${list.map(c=>`
 function renderInstitutionTable(){
 const map={};
 contacts.forEach(c=>{
-const key=c.institution||"Unknown";
-map[key]=(map[key]||0)+1;
+const k=c.institution||"Unknown";
+if(!map[k]) map[k]={total:0,new:0,old:0};
+map[k].total++;
+(c.status==='old'?map[k].old++:map[k].new++);
 });
-const total=contacts.length||1;
 
 document.getElementById("institution-table").innerHTML=`
 <table>
-<tr><th>Institution</th><th>Total</th><th>%</th></tr>
+<tr><th>Institution</th><th>Total</th><th>NEW</th><th>OLD</th></tr>
 ${Object.entries(map)
-.sort((a,b)=>b[1]-a[1])
+.sort((a,b)=>b[1].total-a[1].total)
 .map(([k,v])=>`
 <tr>
 <td>${k}</td>
-<td>${v}</td>
-<td>${((v/total)*100).toFixed(1)}%</td>
+<td>${v.total}</td>
+<td><span class="badge badge-new">${v.new}</span></td>
+<td><span class="badge badge-old">${v.old}</span></td>
 </tr>`).join('')}
 </table>`;
 }
