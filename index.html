@@ -35,11 +35,7 @@ border-radius:14px;
 box-shadow:0 10px 30px rgba(0,0,0,.12);
 }
 
-h1{
-text-align:center;
-color:var(--blue);
-margin-bottom:10px;
-}
+h1{text-align:center;color:var(--blue)}
 
 .tabs{
 display:flex;
@@ -90,15 +86,12 @@ font-size:.9rem;
 th,td{
 border:1px solid var(--border);
 padding:8px;
-text-align:left;
 }
 
-th{
-background:#f1f3f5;
-}
+th{background:#f1f3f5}
 
 .badge{
-padding:3px 8px;
+padding:4px 9px;
 border-radius:12px;
 font-size:.75rem;
 font-weight:700;
@@ -127,7 +120,7 @@ color:#777;
 <div class="tabs">
 <div class="tab active" onclick="openTab('members',this)">Members</div>
 <div class="tab" onclick="openTab('downloads',this)">Downloads</div>
-<div class="tab" onclick="openTab('mark',this)">Mark as Old</div>
+<div class="tab" onclick="openTab('mark',this)">Mark as Downloaded</div>
 <div class="tab" onclick="openTab('institutions',this)">Institutions</div>
 </div>
 
@@ -139,9 +132,9 @@ color:#777;
 <!-- DOWNLOADS -->
 <div id="downloads" class="hidden">
 <div class="actions">
-<button class="btn-green" onclick="downloadByStatus('new')">⬇ Download NEW</button>
-<button class="btn-red" onclick="downloadByStatus('old')">⬇ Download OLD</button>
-<button class="btn-blue" onclick="downloadAll()">⬇ Download ALL</button>
+<button class="btn-green" onclick="downloadByStatus('new')">⬇ NEW Contacts</button>
+<button class="btn-red" onclick="downloadByStatus('old')">⬇ OLD Contacts</button>
+<button class="btn-blue" onclick="downloadAll()">⬇ ALL Contacts</button>
 </div>
 </div>
 
@@ -182,58 +175,33 @@ async function load(){
 try{
 const res=await fetch(API);
 contacts=await res.json();
-contacts.sort((a,b)=>new Date(b.joindate)-new Date(a.joindate));
 renderMembers();
 }catch{
-document.getElementById("members-table").innerHTML="❌ Failed to load contacts.";
+document.getElementById("members-table").innerHTML="❌ Failed to load contacts";
 }
 }
 load();
-setInterval(load,10000);
-
-/* MEMBERS TABLE */
-function renderMembers(){
-document.getElementById("members-table").innerHTML=`
-<table>
-<tr>
-<th>Status</th><th>Name</th><th>State</th><th>Phone</th><th>Institution</th>
-</tr>
-${contacts.map(c=>{
-const isNew=c.status!=='old';
-return `
-<tr>
-<td><span class="badge ${isNew?'badge-new':'badge-old'}">${isNew?'NEW':'OLD'}</span></td>
-<td>${c.name||''}</td>
-<td>${c.state||''}</td>
-<td>${c.phone||''}</td>
-<td>${c.institution||''}</td>
-</tr>`;
-}).join('')}
-</table>`;
-}
+setInterval(load,15000);
 
 /* HELPERS */
-function stateAbbr(state){
-if(!state) return "UNK";
-return state.replace(/[^a-zA-Z]/g,'').substring(0,3).toUpperCase();
+const isOld=c=>(c.status||'').toLowerCase()==='old';
+
+function stateAbbr(s){
+return (s||'UNK').replace(/[^A-Za-z]/g,'').substring(0,3).toUpperCase();
 }
 
-function uniqueContacts(list){
+function unique(list){
 const map=new Map();
 list.forEach(c=>{
-if(c.phone && !map.has(c.phone)){
-map.set(c.phone,c);
-}
+if(c.phone && !map.has(c.phone)) map.set(c.phone,c);
 });
-return Array.from(map.values());
+return [...map.values()];
 }
 
 function chunk(arr,size){
-const chunks=[];
-for(let i=0;i<arr.length;i+=size){
-chunks.push(arr.slice(i,i+size));
-}
-return chunks;
+const out=[];
+for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+return out;
 }
 
 function vcf(c){
@@ -245,38 +213,54 @@ TEL:${c.phone}
 END:VCARD`;
 }
 
-/* DOWNLOAD LOGIC */
-function downloadContacts(list,base){
-const clean=uniqueContacts(list);
-if(!clean.length) return alert("No contacts available.");
+/* MEMBERS TABLE */
+function renderMembers(){
+document.getElementById("members-table").innerHTML=`
+<table>
+<tr><th>Status</th><th>Name</th><th>State</th><th>Phone</th><th>Institution</th></tr>
+${contacts.map(c=>`
+<tr>
+<td><span class="badge ${isOld(c)?'badge-old':'badge-new'}">${isOld(c)?'OLD':'NEW'}</span></td>
+<td>${c.name||''}</td>
+<td>${c.state||''}</td>
+<td>${c.phone||''}</td>
+<td>${c.institution||''}</td>
+</tr>`).join('')}
+</table>`;
+}
 
-chunk(clean,100).forEach((batch,i)=>{
-const blob=new Blob([batch.map(vcf).join("\n")],{type:"text/vcard"});
-const a=document.createElement("a");
+/* DOWNLOADS */
+function downloadByStatus(type){
+const list=unique(
+contacts.filter(c=> type==='old' ? isOld(c) : !isOld(c))
+);
+download(list,`CampusConnect_${type.toUpperCase()}`);
+}
+
+function downloadAll(){
+download(unique(contacts),'CampusConnect_ALL');
+}
+
+function download(list,base){
+if(!list.length) return alert("No contacts found.");
+chunk(list,100).forEach((b,i)=>{
+const blob=new Blob([b.map(vcf).join("\n")],{type:'text/vcard'});
+const a=document.createElement('a');
 a.href=URL.createObjectURL(blob);
 a.download=`${base}_${i+1}.vcf`;
 a.click();
 });
 }
 
-function downloadByStatus(type){
-const list=contacts.filter(c=>type==='new'?c.status!=='old':c.status==='old');
-downloadContacts(list,`CampusConnect_${type.toUpperCase()}`);
-}
-
-function downloadAll(){
-downloadContacts(contacts,"CampusConnect_ALL");
-}
-
-/* MARK OLD */
+/* MARK AS OLD */
 async function markAllOld(){
 if(!confirm("Mark all NEW contacts as OLD?")) return;
-const list=contacts.filter(c=>c.status!=='old');
+const list=contacts.filter(c=>!isOld(c));
 for(const c of list){
 await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
-method:"PATCH",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({data:[{status:"old"}]})
+method:'PATCH',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({data:[{status:'old'}]})
 });
 }
 alert("All NEW contacts marked as OLD");
@@ -285,7 +269,7 @@ load();
 
 /* MARK TABLE */
 function renderMarkTable(){
-const list=contacts.filter(c=>c.status!=='old');
+const list=contacts.filter(c=>!isOld(c));
 document.getElementById("mark-table").innerHTML=`
 <table>
 <tr><th>Name</th><th>Phone</th><th>State</th></tr>
@@ -298,16 +282,15 @@ ${list.map(c=>`
 </table>`;
 }
 
-/* INSTITUTION ANALYSIS */
+/* INSTITUTIONS */
 function renderInstitutionTable(){
 const map={};
 contacts.forEach(c=>{
-const k=c.institution||"Unknown";
+const k=c.institution||'Unknown';
 if(!map[k]) map[k]={total:0,new:0,old:0};
 map[k].total++;
-(c.status==='old'?map[k].old++:map[k].new++);
+isOld(c)?map[k].old++:map[k].new++;
 });
-
 document.getElementById("institution-table").innerHTML=`
 <table>
 <tr><th>Institution</th><th>Total</th><th>NEW</th><th>OLD</th></tr>
