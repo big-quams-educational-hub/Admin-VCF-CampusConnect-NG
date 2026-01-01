@@ -24,7 +24,7 @@ justify-content:center;
 }
 .container{
 width:95%;
-max-width:1100px;
+max-width:1200px;
 background:#fff;
 margin:20px 0;
 padding:20px;
@@ -60,11 +60,12 @@ margin-bottom:15px;
 
 button{
 border:none;
-padding:10px 18px;
+padding:10px 16px;
 border-radius:8px;
 font-weight:700;
 color:#fff;
 cursor:pointer;
+font-size:.85rem;
 }
 .btn-green{background:var(--green)}
 .btn-blue{background:var(--blue)}
@@ -92,6 +93,7 @@ color:#fff;
 .badge-old{background:var(--red)}
 
 .hidden{display:none}
+
 .footer{
 text-align:center;
 margin-top:15px;
@@ -110,6 +112,7 @@ color:#777;
 <div class="tab active" onclick="openTab('members',this)">Members</div>
 <div class="tab" onclick="openTab('downloads',this)">Downloads</div>
 <div class="tab" onclick="openTab('institutions',this)">Institutions</div>
+<div class="tab" onclick="openTab('byInstitution',this)">Download by Institution</div>
 </div>
 
 <!-- MEMBERS -->
@@ -120,15 +123,21 @@ color:#777;
 <!-- DOWNLOADS -->
 <div id="downloads" class="hidden">
 <div class="actions">
-<button class="btn-green" onclick="downloadByStatus('new')">⬇ NEW Contacts</button>
-<button class="btn-red" onclick="downloadByStatus('old')">⬇ OLD Contacts</button>
+<button class="btn-green" onclick="downloadNew()">⬇ NEW Contacts</button>
+<button class="btn-red" onclick="downloadOld()">⬇ OLD Contacts</button>
 <button class="btn-blue" onclick="downloadAll()">⬇ ALL Contacts</button>
 </div>
+<p><b>Last NEW download:</b> <span id="lastDownload">Never</span></p>
 </div>
 
-<!-- INSTITUTIONS -->
+<!-- INSTITUTIONS ANALYTICS -->
 <div id="institutions" class="hidden">
 <div id="institution-table"></div>
+</div>
+
+<!-- DOWNLOAD BY INSTITUTION -->
+<div id="byInstitution" class="hidden">
+<div id="byInstitution-table"></div>
 </div>
 
 <div class="footer">CampusConnect NG • Admin Only</div>
@@ -137,23 +146,25 @@ color:#777;
 <script>
 const API="https://sheetdb.io/api/v1/lcqbyo961rmzf";
 let contacts=[];
+let lastDownload = localStorage.getItem("cc_last_download");
 
-/* TAB HANDLER */
 function openTab(id,el){
-document.querySelectorAll('#members,#downloads,#institutions')
+document.querySelectorAll('#members,#downloads,#institutions,#byInstitution')
 .forEach(d=>d.classList.add('hidden'));
 document.getElementById(id).classList.remove('hidden');
 document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
 el.classList.add('active');
-if(id==='institutions') renderInstitutionTable();
+
+if(id==='institutions') renderInstitutionStats();
+if(id==='byInstitution') renderByInstitution();
 }
 
-/* LOAD */
 async function load(){
 try{
 const res=await fetch(API);
 contacts=await res.json();
 renderMembers();
+updateLastDownloadText();
 }catch{
 document.getElementById("members-table").innerHTML="❌ Failed to load contacts";
 }
@@ -161,8 +172,10 @@ document.getElementById("members-table").innerHTML="❌ Failed to load contacts"
 load();
 setInterval(load,15000);
 
-/* HELPERS */
-const isOld=c=>(c.status||'').toLowerCase()==='old';
+const isOld=c=>{
+if(!lastDownload) return false;
+return new Date(c.joindate) <= new Date(lastDownload);
+};
 
 function stateAbbr(s){
 return (s||'UNK').replace(/[^A-Za-z]/g,'').substring(0,3).toUpperCase();
@@ -190,7 +203,6 @@ TEL:${c.phone}
 END:VCARD`;
 }
 
-/* MEMBERS TABLE */
 function renderMembers(){
 document.getElementById("members-table").innerHTML=`
 <table>
@@ -206,22 +218,21 @@ ${contacts.map(c=>`
 </table>`;
 }
 
-/* DOWNLOAD + AUTO MARK */
-async function downloadByStatus(type){
-let list = unique(
-contacts.filter(c=> type==='old' ? isOld(c) : !isOld(c))
-);
-if(!list.length) return alert("No contacts found.");
-
-download(list,`CampusConnect_${type.toUpperCase()}`);
-
-if(type==='new') await autoMarkOld(list);
+function downloadNew(){
+const list=unique(contacts.filter(c=>!isOld(c)));
+if(!list.length) return alert("No NEW contacts.");
+download(list,"CampusConnect_NEW");
+markDownloaded();
 }
 
-async function downloadAll(){
-const list = unique(contacts);
-download(list,"CampusConnect_ALL");
-await autoMarkOld(list.filter(c=>!isOld(c)));
+function downloadOld(){
+const list=unique(contacts.filter(c=>isOld(c)));
+download(list,"CampusConnect_OLD");
+}
+
+function downloadAll(){
+download(unique(contacts),"CampusConnect_ALL");
+markDownloaded();
 }
 
 function download(list,base){
@@ -234,20 +245,19 @@ a.click();
 });
 }
 
-/* AUTO MARK */
-async function autoMarkOld(list){
-for(const c of list){
-await fetch(`${API}/search?phone=${encodeURIComponent(c.phone)}`,{
-method:'PATCH',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({data:[{status:'old'}]})
-});
-}
-load();
+function markDownloaded(){
+lastDownload = new Date().toISOString();
+localStorage.setItem("cc_last_download", lastDownload);
+updateLastDownloadText();
+renderMembers();
 }
 
-/* INSTITUTIONS */
-function renderInstitutionTable(){
+function updateLastDownloadText(){
+document.getElementById("lastDownload").textContent =
+lastDownload ? new Date(lastDownload).toLocaleString() : "Never";
+}
+
+function renderInstitutionStats(){
 const map={};
 contacts.forEach(c=>{
 const k=c.institution||'Unknown';
@@ -258,9 +268,7 @@ isOld(c)?map[k].old++:map[k].new++;
 document.getElementById("institution-table").innerHTML=`
 <table>
 <tr><th>Institution</th><th>Total</th><th>NEW</th><th>OLD</th></tr>
-${Object.entries(map)
-.sort((a,b)=>b[1].total-a[1].total)
-.map(([k,v])=>`
+${Object.entries(map).sort((a,b)=>b[1].total-a[1].total).map(([k,v])=>`
 <tr>
 <td>${k}</td>
 <td>${v.total}</td>
@@ -268,6 +276,35 @@ ${Object.entries(map)
 <td><span class="badge badge-old">${v.old}</span></td>
 </tr>`).join('')}
 </table>`;
+}
+
+function renderByInstitution(){
+const map={};
+contacts.forEach(c=>{
+const k=c.institution||'Unknown';
+if(!map[k]) map[k]=[];
+map[k].push(c);
+});
+document.getElementById("byInstitution-table").innerHTML=`
+${Object.entries(map).map(([inst,list])=>`
+<div style="margin-bottom:20px">
+<h3>${inst} (${list.length})</h3>
+<div class="actions">
+<button class="btn-green" onclick='downloadInst("${inst}","new")'>NEW</button>
+<button class="btn-red" onclick='downloadInst("${inst}","old")'>OLD</button>
+<button class="btn-blue" onclick='downloadInst("${inst}","all")'>ALL</button>
+</div>
+</div>`).join('')}
+`;
+}
+
+function downloadInst(inst,type){
+let list = contacts.filter(c=>c.institution===inst);
+if(type==='new') list=list.filter(c=>!isOld(c));
+if(type==='old') list=list.filter(c=>isOld(c));
+list=unique(list);
+download(list,`CampusConnect_${inst.replace(/\s+/g,'_')}_${type.toUpperCase()}`);
+if(type!=='old') markDownloaded();
 }
 </script>
 
